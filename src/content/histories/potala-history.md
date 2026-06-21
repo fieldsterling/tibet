@@ -1,7 +1,7 @@
 ---
 title: 布达拉宫千年风云
 author: 藏地历史学者·江白
-era: [吐蕃, 清朝]
+era: [631, 1645]
 relatedPlaces: [大昭寺, 罗布林卡]
 events:
   - year: 631
