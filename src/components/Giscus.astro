@@ -1,23 +1,28 @@
 ---
-// Giscus 评论组件 - 基于 GitHub Discussions
-// 使用前需要先在 GitHub Settings > Applications > Giscus 授权
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
 ---
 
-<div id="giscus-container" class="mt-8">
-  <h2 class="font-serif text-2xl font-bold text-tibet-blue mb-4">评论</h2>
-  <div id="giscus"></div>
+<div class="giscus-container mt-8">
+  <h3 class="font-serif text-lg font-bold text-gray-900 mb-4">评论</h3>
+  <div class="giscus"></div>
 </div>
 
-<script src="https://giscus.app/client.js"
-  data-repo="你的用户名/你的仓库"
-  data-repo-id="你的仓库ID"
-  data-category="Announcements"
-  data-category-id="DIC_kwDOA"
-  data-mapping="pathname"
+<script
+  src="https://giscus.app/client.js"
+  data-repo="fieldsterling/tibet"
+  data-repo-id="R_kgDOJeU"
+  data-category="General"
+  data-category-id="DIC_kwDOJeUs4C4CZX"
+  data-mapping="specific"
+  data-term={slug}
   data-strict="0"
   data-reactions-enabled="1"
   data-emit-metadata="0"
-  data-input-position="top"
+  data-input-position="bottom"
   data-theme="light"
   data-lang="zh-CN"
   data-loading="lazy"
@@ -26,7 +31,9 @@
 </script>
 
 <style>
-  #giscus-container .giscus {
-    width: 100%;
+  .giscus-container {
+    padding: 1.5rem;
+    background: #f9fafb;
+    border-radius: 0.75rem;
   }
 </style>
