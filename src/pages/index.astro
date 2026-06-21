@@ -26,28 +26,28 @@ const knowledgeGraphData = await buildKnowledgeGraph();
   <div class="relative w-full h-full">
     <!-- 全屏地图 -->
     <MapCore 
-      client:load 
+      client:only="react"
       travelogs={travelogs} 
       routes={routes}
     />
     
     <!-- 搜索浮层 -->
-    <SearchOverlay client:load travelogs={travelogs} />
+    <SearchOverlay client:only="react" travelogs={travelogs} />
     
     <!-- 路线层胶囊 -->
-    <RouteLayerCapsule client:load routes={routes} />
+    <RouteLayerCapsule client:only="react" routes={routes} />
     
     <!-- 叙事层胶囊 -->
-    <NarrativeLayerCapsule client:load histories={histories} />
+    <NarrativeLayerCapsule client:only="react" histories={histories} />
     
     <!-- 底部发现抽屉 -->
-    <DiscoveryDrawer client:load travelogs={travelogs} />
+    <DiscoveryDrawer client:only="react" travelogs={travelogs} />
     
     <!-- 用户菜单 -->
-    <UserMenu client:load />
+    <UserMenu client:only="react" />
     
     <!-- 贡献浮动按钮 -->
-    <ContributionFab client:load />
+    <ContributionFab client:only="react" />
     
     <!-- 顶部标题 -->
     <header class="absolute top-0 left-0 right-0 z-[1000] pointer-events-none">
@@ -99,7 +99,7 @@ const knowledgeGraphData = await buildKnowledgeGraph();
     <!-- 知识图谱弹窗 -->
     <div id="knowledge-graph-modal" class="hidden">
       <KnowledgeGraph 
-        client:load 
+        client:only="react"
         nodes={knowledgeGraphData.nodes}
         edges={knowledgeGraphData.edges}
       />
@@ -107,12 +107,12 @@ const knowledgeGraphData = await buildKnowledgeGraph();
 
     <!-- 路线对比弹窗 -->
     <div id="route-compare-modal" class="hidden">
-      <RouteCompare client:load travelogs={travelogs} />
+      <RouteCompare client:only="react" travelogs={travelogs} />
     </div>
 
     <!-- 成就弹窗 -->
     <div id="achievement-modal" class="hidden">
-      <AchievementBadge client:load />
+      <AchievementBadge client:only="react" />
     </div>
   </div>
 </Layout>
