@@ -10,11 +10,6 @@
   to = "/index.html"
   status = 200
 
-# Netlify Identity
-[[plugins]]
-  package = "@netlify/plugin-forms"
-
-#headers
 [[headers]]
   for = "/*"
   [headers.values]
