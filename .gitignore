@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Pagefind (generated after build)
+dist/pagefind/
+
+# Netlify
+.netlify/
+
+# Turso
+*.db
+*.db-journal
+
+# TypeScript
+*.tsbuildinfo
+
+# Astro
+.astro/

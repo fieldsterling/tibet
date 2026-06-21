@@ -1,0 +1,112 @@
+backend:
+  name: netlify
+  enable_logging: true
+
+local_backend: true
+
+# 媒体库 - 腾讯云 COS
+media_library:
+  name: tcv2020
+  config:
+    key: "你的COS Bucket名称"
+    bucket: "你的COS Bucket名称"
+    region: "ap-beijing"  # 根据实际区域修改
+    # 可用 COS_BASE_URL 环境变量指定完整 URL
+
+# 集合定义
+collections:
+
+  # 旅行者笔记
+  - name: "travelogs"
+    label: "旅行者笔记"
+    label_singular: "旅行者笔记"
+    folder: "src/content/travelogs"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "作者", name: "author", widget: "string" }
+      - { label: "日期", name: "date", widget: "datetime", format: "YYYY-MM-DD" }
+      - { label: "标签", name: "tags", widget: "list", default: [] }
+      - { label: "封面图片", name: "cover", widget: "image", required: false }
+      - label: "地点"
+        name: "points"
+        widget: "list"
+        required: false
+        fields:
+          - { label: "地点名称", name: "name", widget: "string" }
+          - { label: "纬度", name: "lat", widget: "number", value_type: "float" }
+          - { label: "经度", name: "lng", widget: "number", value_type: "float" }
+          - { label: "日期", name: "date", widget: "datetime", format: "YYYY-MM-DD", required: false }
+          - { label: "描述", name: "desc", widget: "text" }
+          - { label: "图片", name: "image", widget: "image", required: false }
+      - { label: "正文", name: "body", widget: "markdown" }
+
+  # 商家标注
+  - name: "businesses"
+    label: "商家标注"
+    label_singular: "商家标注"
+    folder: "src/content/businesses"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "名称", name: "title", widget: "string" }
+      - label: "类型"
+        name: "type"
+        widget: "select"
+        options: ["住宿", "餐饮", "交通", "补给", "其他"]
+      - { label: "纬度", name: "lat", widget: "number", value_type: "float" }
+      - { label: "经度", name: "lng", widget: "number", value_type: "float" }
+      - { label: "标签", name: "tags", widget: "list", default: [] }
+      - { label: "图片", name: "images", widget: "list", required: false, field: { label: "图片", name: "url", widget: "image" } }
+      - { label: "联系方式", name: "contact", widget: "string", required: false }
+      - { label: "网站", name: "website", widget: "string", required: false }
+      - { label: "描述", name: "body", widget: "markdown" }
+
+  # 历史叙事
+  - name: "histories"
+    label: "历史叙事"
+    label_singular: "历史叙事"
+    folder: "src/content/histories"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "作者", name: "author", widget: "string" }
+      - { label: "时代", name: "era", widget: "list", field: { label: "时代", name: "period", widget: "string" }, default: [] }
+      - { label: "相关地点", name: "relatedPlaces", widget: "list", required: false }
+      - label: "事件"
+        name: "events"
+        widget: "list"
+        fields:
+          - { label: "年份", name: "year", widget: "number" }
+          - { label: "描述", name: "desc", widget: "text" }
+          - { label: "纬度", name: "lat", widget: "number", value_type: "float" }
+          - { label: "经度", name: "lng", widget: "number", value_type: "float" }
+          - { label: "图片", name: "image", widget: "image", required: false }
+      - { label: "正文", name: "body", widget: "markdown" }
+
+  # 地理路线
+  - name: "routes"
+    label: "地理路线"
+    label_singular: "地理路线"
+    folder: "src/content/routes"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "作者", name: "author", widget: "string" }
+      - label: "类型"
+        name: "type"
+        widget: "select"
+        options: ["修行", "探险", "朝圣"]
+      - label: "路线点"
+        name: "points"
+        widget: "list"
+        fields:
+          - { label: "地点名称", name: "name", widget: "string" }
+          - { label: "纬度", name: "lat", widget: "number", value_type: "float" }
+          - { label: "经度", name: "lng", widget: "number", value_type: "float" }
+          - { label: "描述", name: "desc", widget: "text" }
+          - { label: "图片", name: "image", widget: "image", required: false }
+      - { label: "概述", name: "body", widget: "markdown" }

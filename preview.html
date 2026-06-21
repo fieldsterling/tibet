@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>西藏时空地图志 - 预览</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --tibet-blue: #1a4b6e;
+      --tibet-red: #c41e3a;
+      --tibet-gold: #d4a84b;
+      --tibet-cream: #f5f0e8;
+    }
+    
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--tibet-cream);
+      color: #333;
+      min-height: 100vh;
+    }
+    
+    .font-serif { font-family: 'Noto Serif SC', serif; }
+    
+    /* 全屏地图容器 */
+    .map-container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    
+    /* 顶部标题 */
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+    
+    .header h1 {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      pointer-events: auto;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      pointer-events: auto;
+    }
+    
+    .icon-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(8px);
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #4b5563;
+    }
+    
+    .icon-btn:hover {
+      background: white;
+      transform: scale(1.05);
+    }
+    
+    /* 搜索框 */
+    .search-box {
+      position: absolute;
+      top: 5rem;
+      left: 1rem;
+      z-index: 1000;
+      width: 18rem;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(8px);
+      border: none;
+      border-radius: 9999px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 0.95rem;
+      outline: none;
+    }
+    
+    .search-input:focus {
+      box-shadow: 0 4px 20px rgba(26,75,110,0.3);
+    }
+    
+    /* 胶囊按钮 */
+    .capsule {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(8px);
+      border-radius: 9999px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+      color: #4b5563;
+      z-index: 1000;
+    }
+    
+    .capsule:hover {
+      background: white;
+    }
+    
+    .capsule.active {
+      background: var(--tibet-blue);
+      color: white;
+    }
+    
+    .capsule.red.active {
+      background: var(--tibet-red);
+    }
+    
+    .route-capsule { top: 5rem; right: 1rem; }
+    .narrative-capsule { top: 8rem; right: 1rem; }
+    
+    /* 底部发现抽屉 */
+    .drawer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-radius: 1.5rem 1.5rem 0 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      z-index: 1000;
+      transition: transform 0.3s ease-out;
+    }
+    
+    .drawer-handle {
+      width: 3rem;
+      height: 0.375rem;
+      background: #d1d5db;
+      border-radius: 9999px;
+      margin: 0.75rem auto;
+    }
+    
+    .drawer-content {
+      padding: 0 1rem 1.5rem;
+      max-height: 40vh;
+      overflow-y: auto;
+    }
+    
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .card {
+      background: #f9fafb;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .card:hover {
+      background: #f3f4f6;
+    }
+    
+    .card-title {
+      font-family: 'Noto Serif SC', serif;
+      font-weight: 600;
+      color: #111827;
+    }
+    
+    .card-meta {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+    
+    .card-tags {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .tag {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(26,75,110,0.1);
+      color: var(--tibet-blue);
+      border-radius: 9999px;
+    }
+    
+    /* 弹窗 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+      width: 90vw;
+      max-width: 32rem;
+      max-height: 80vh;
+      overflow: hidden;
+    }
+    
+    .modal-header {
+      background: linear-gradient(135deg, var(--tibet-blue), var(--tibet-red));
+      color: white;
+      padding: 1.5rem;
+    }
+    
+    .modal-body {
+      padding: 1.5rem;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    
+    /* 信息卡 */
+    .info-card {
+      position: absolute;
+      bottom: 8rem;
+      left: 1rem;
+      right: 1rem;
+      max-width: 20rem;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      padding: 1rem;
+      z-index: 1000;
+    }
+    
+    .info-card h3 {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--tibet-blue);
+      margin-bottom: 0.5rem;
+    }
+    
+    .info-card p {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+    
+    .info-card .desc {
+      color: #374151;
+      margin-top: 0.5rem;
+      line-height: 1.5;
+    }
+    
+    /* 图例 */
+    .legend {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(8px);
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 1000;
+      font-size: 0.75rem;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .legend-dot {
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 50%;
+    }
+    
+    /* 贡献按钮 */
+    .fab {
+      position: fixed;
+      bottom: 6rem;
+      right: 1rem;
+      width: 3.5rem;
+      height: 3.5rem;
+      background: var(--tibet-red);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(196,30,58,0.4);
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 1000;
+      font-size: 1.5rem;
+    }
+    
+    .fab:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 30px rgba(196,30,58,0.5);
+    }
+    
+    /* 用户头像 */
+    .user-avatar {
+      position: fixed;
+      bottom: 10rem;
+      right: 1rem;
+      width: 3rem;
+      height: 3rem;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(8px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      cursor: pointer;
+      z-index: 1000;
+    }
+    
+    /* 时间轴 */
+    .timeline {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-top: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    
+    .timeline-year {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--tibet-blue);
+    }
+    
+    .timeline-slider {
+      width: 100%;
+      height: 0.5rem;
+      -webkit-appearance: none;
+      background: #e5e7eb;
+      border-radius: 9999px;
+      outline: none;
+    }
+    
+    .timeline-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 1.25rem;
+      height: 1.25rem;
+      background: var(--tibet-blue);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    
+    .timeline-desc {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+    
+    /* 成就徽章 */
+    .achievement-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: #f9fafb;
+      border-radius: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .achievement-card.unlocked {
+      background: linear-gradient(135deg, rgba(212,168,75,0.1), rgba(251,191,36,0.1));
+      border: 2px solid var(--tibet-gold);
+    }
+    
+    .achievement-icon {
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      background: #e5e7eb;
+    }
+    
+    .achievement-card.unlocked .achievement-icon {
+      background: linear-gradient(135deg, var(--tibet-gold), #fbbf24);
+      color: white;
+    }
+    
+    .achievement-info h4 {
+      font-weight: 600;
+      color: #111827;
+    }
+    
+    .achievement-info p {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+    
+    .achievement-progress {
+      height: 0.375rem;
+      background: #e5e7eb;
+      border-radius: 9999px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+    
+    .achievement-progress-bar {
+      height: 100%;
+      background: var(--tibet-blue);
+      border-radius: 9999px;
+      transition: width 0.3s;
+    }
+    
+    /* 路线对比 */
+    .route-option {
+      padding: 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.75rem;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .route-option.selected {
+      border-color: var(--tibet-blue);
+      background: rgba(26,75,110,0.05);
+    }
+    
+    .route-option.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .header h1 { font-size: 1.25rem; }
+      .search-box { width: calc(100% - 2rem); }
+      .route-capsule, .narrative-capsule { right: 0.5rem; }
+      .capsule { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+      .route-capsule { top: 4.5rem; }
+      .narrative-capsule { top: 7.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 全屏地图 -->
+  <div class="map-container">
+    <div id="map"></div>
+    
+    <!-- 顶部标题 -->
+    <header class="header">
+      <h1>西藏时空地图志</h1>
+      <div class="header-actions">
+        <a href="about.html" class="icon-btn" title="关于">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </a>
+        <a href="search.html" class="icon-btn" title="搜索">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </a>
+      </div>
+    </header>
+    
+    <!-- 搜索框 -->
+    <div class="search-box">
+      <input type="text" class="search-input" placeholder="搜索地点、内容..." onclick="showSearchModal()">
+    </div>
+    
+    <!-- 路线层胶囊 -->
+    <button class="capsule route-capsule" onclick="toggleRouteCapsule(this)">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      </svg>
+      <span>路线层</span>
+    </button>
+    
+    <!-- 叙事层胶囊 -->
+    <button class="capsule red narrative-capsule" onclick="toggleNarrativeCapsule()">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+      <span>叙事层</span>
+    </button>
+    
+    <!-- 用户头像 -->
+    <div class="user-avatar" onclick="showUserMenu()">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+    </div>
+    
+    <!-- 贡献浮动按钮 -->
+    <div class="fab" onclick="showContributionMenu()">+</div>
+    
+    <!-- 底部发现抽屉 -->
+    <div class="drawer" id="drawer">
+      <div class="drawer-handle"></div>
+      <div class="drawer-content">
+        <div class="drawer-header">
+          <h2 class="font-serif text-lg font-bold text-tibet-blue">发现</h2>
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+        
+        <div class="card" onclick="showTravelogDetail('kailash')">
+          <h3 class="card-title">我的冈仁波齐转山记</h3>
+          <p class="card-meta">行者顿珠 · 2025-09-15</p>
+          <div class="card-tags">
+            <span class="tag">转山</span>
+            <span class="tag">阿里</span>
+            <span class="tag">徒步</span>
+          </div>
+        </div>
+        
+        <div class="card" onclick="showTravelogDetail('namtso')">
+          <h3 class="card-title">拉萨—纳木错三天自驾小记</h3>
+          <p class="card-meta">安多卓玛 · 2025-07-20</p>
+          <div class="card-tags">
+            <span class="tag">自驾</span>
+            <span class="tag">湖泊</span>
+            <span class="tag">观星</span>
+          </div>
+        </div>
+        
+        <div class="card" onclick="showTravelogDetail('caves')">
+          <h3 class="card-title">普兰山野隐修洞探访记</h3>
+          <p class="card-meta">修行者阿旺 · 2025-08-10</p>
+          <div class="card-tags">
+            <span class="tag">修行</span>
+            <span class="tag">洞穴</span>
+            <span class="tag">隐士</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 图例 -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background: #c41e3a;"></div>
+        <span>旅行地点</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: #6b46c1;"></div>
+        <span>修行路线</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: #dd6b20;"></div>
+        <span>探险路线</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: #d4a84b;"></div>
+        <span>历史事件</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 路线层面板 -->
+  <div id="route-panel" class="modal-overlay" style="display:none;" onclick="closeRoutePanel(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="font-serif text-xl font-bold">选择路线类型</h2>
+      </div>
+      <div class="modal-body">
+        <label class="route-option">
+          <input type="checkbox"> <strong>大师线</strong> <span style="color:#6b7280;font-size:0.875rem;">修行类路线</span>
+        </label>
+        <label class="route-option">
+          <input type="checkbox"> <strong>经典线</strong> <span style="color:#6b7280;font-size:0.875rem;">探险类路线</span>
+        </label>
+        <label class="route-option">
+          <input type="checkbox"> <strong>个人推荐线</strong> <span style="color:#6b7280;font-size:0.875rem;">朝圣类路线</span>
+        </label>
+        <label class="route-option">
+          <input type="checkbox"> <strong>个人线</strong> <span style="color:#6b7280;font-size:0.875rem;">自定义路线</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 叙事层面板 -->
+  <div id="narrative-panel" class="modal-overlay" style="display:none;" onclick="closeNarrativePanel(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header" style="background: linear-gradient(135deg, #c41e3a, #dc2626);">
+        <h2 class="font-serif text-xl font-bold">选择叙事内容</h2>
+      </div>
+      <div class="modal-body">
+        <button class="card" style="width:100%;text-align:left;" onclick="showTimeline()">
+          <strong>经典地点</strong>
+          <p style="color:#6b7280;font-size:0.875rem;margin-top:0.25rem;">探索西藏经典历史文化地点</p>
+        </button>
+        <button class="card" style="width:100%;text-align:left;">
+          <strong>分类地点集</strong>
+          <p style="color:#6b7280;font-size:0.875rem;margin-top:0.25rem;">按主题分类的地点集合</p>
+        </button>
+        <button class="card" style="width:100%;text-align:left;">
+          <strong>服务与商品集</strong>
+          <p style="color:#6b7280;font-size:0.875rem;margin-top:0.25rem;">旅行服务和特色商品</p>
+        </button>
+        
+        <div id="timeline" class="timeline" style="display:none;">
+          <div class="timeline-header">
+            <span class="timeline-year">631年</span>
+            <button onclick="togglePlayback()">
+              <svg width="24" height="24" fill="var(--tibet-blue)" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+          </div>
+          <input type="range" class="timeline-slider" min="0" max="3" value="0" oninput="updateTimeline(this.value)">
+          <p class="timeline-desc">松赞干布为迎娶文成公主始建红宫...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 贡献菜单 -->
+  <div id="contribution-menu" class="modal-overlay" style="display:none;" onclick="closeContributionMenu(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="font-serif text-xl font-bold">参与贡献</h2>
+        <p style="opacity:0.8;font-size:0.875rem;margin-top:0.25rem;">选择要添加的内容类型</p>
+      </div>
+      <div class="modal-body">
+        <button class="card" style="display:flex;align-items:center;gap:1rem;">
+          <div style="width:3rem;height:3rem;background:#3b82f6;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">✈️</div>
+          <div>
+            <strong>旅行笔记</strong>
+            <p style="color:#6b7280;font-size:0.875rem;">分享你的西藏之旅</p>
+          </div>
+        </button>
+        <button class="card" style="display:flex;align-items:center;gap:1rem;">
+          <div style="width:3rem;height:3rem;background:#8b5cf6;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🏪</div>
+          <div>
+            <strong>商家标注</strong>
+            <p style="color:#6b7280;font-size:0.875rem;">添加实用服务信息</p>
+          </div>
+        </button>
+        <button class="card" style="display:flex;align-items:center;gap:1rem;">
+          <div style="width:3rem;height:3rem;background:#f59e0b;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">📜</div>
+          <div>
+            <strong>历史叙事</strong>
+            <p style="color:#6b7280;font-size:0.875rem;">补充历史知识</p>
+          </div>
+        </button>
+        <button class="card" style="display:flex;align-items:center;gap:1rem;">
+          <div style="width:3rem;height:3rem;background:#10b981;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🗺️</div>
+          <div>
+            <strong>地理路线</strong>
+            <p style="color:#6b7280;font-size:0.875rem;">分享你的探索路线</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 成就弹窗 -->
+  <div id="achievement-modal" class="modal-overlay" style="display:none;" onclick="closeAchievement(event)">
+    <div class="modal" style="max-width:28rem;">
+      <div class="modal-header" style="background:linear-gradient(135deg, #d4a84b, #fbbf24);">
+        <h2 class="font-serif text-xl font-bold">成就与打卡</h2>
+        <p style="opacity:0.8;font-size:0.875rem;margin-top:0.25rem;">完成探索任务，解锁成就徽章</p>
+        <div style="margin-top:0.75rem;">
+          <div style="display:flex;justify-content:space-between;font-size:0.875rem;opacity:0.9;">
+            <span>总进度</span><span>2/6</span>
+          </div>
+          <div style="height:0.5rem;background:rgba(255,255,255,0.3);border-radius:9999px;margin-top:0.25rem;">
+            <div style="height:100%;width:33%;background:white;border-radius:9999px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="achievement-card unlocked">
+          <div class="achievement-icon">🗺️</div>
+          <div class="achievement-info">
+            <h4>探索者</h4>
+            <p>访问10个不同地点</p>
+            <div class="achievement-progress"><div class="achievement-progress-bar" style="width:100%"></div></div>
+          </div>
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-icon">📜</div>
+          <div class="achievement-info">
+            <h4>历史学家</h4>
+            <p>阅读5篇历史叙事</p>
+            <div class="achievement-progress"><div class="achievement-progress-bar" style="width:40%"></div></div>
+          </div>
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-icon">🙏</div>
+          <div class="achievement-info">
+            <h4>朝圣者</h4>
+            <p>查看冈仁波齐相关内容</p>
+            <div class="achievement-progress"><div class="achievement-progress-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-icon">✍️</div>
+          <div class="achievement-info">
+            <h4>贡献者</h4>
+            <p>提交1篇旅行笔记</p>
+            <div class="achievement-progress"><div class="achievement-progress-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 用户菜单 -->
+  <div id="user-menu" class="modal-overlay" style="display:none;" onclick="closeUserMenu(event)">
+    <div class="modal" style="max-width:20rem;" onclick="event.stopPropagation()">
+      <div class="modal-body" style="padding:1rem;">
+        <p style="font-size:0.875rem;color:#6b7280;margin-bottom:1rem;">登录以参与贡献</p>
+        <button style="width:100%;padding:0.75rem;background:var(--tibet-blue);color:white;border:none;border-radius:0.5rem;font-weight:500;cursor:pointer;">
+          登录 / 注册
+        </button>
+        <hr style="margin:1rem 0;border:none;border-top:1px solid #e5e7eb;">
+        <button onclick="showAchievement()" style="width:100%;padding:0.625rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:0.5rem;display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+          <span>🏆</span> 成就与打卡
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 初始化地图
+    const map = L.map('map', {
+      center: [29.65, 91.10],
+      zoom: 7,
+      zoomControl: false
+    });
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18
+    }).addTo(map);
+    
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    
+    // 标注点
+    const points = [
+      { name: '塔钦', lat: 31.050, lng: 81.320, travelog: '我的冈仁波齐转山记', type: 'travelog' },
+      { name: '止热寺', lat: 31.100, lng: 81.380, travelog: '我的冈仁波齐转山记', type: 'travelog' },
+      { name: '纳木错', lat: 30.730, lng: 90.870, travelog: '拉萨—纳木错三天自驾小记', type: 'travelog' },
+      { name: '布达拉宫', lat: 29.657, lng: 91.117, travelog: '布达拉宫千年风云', type: 'history' },
+      { name: '拉萨', lat: 29.650, lng: 91.100, travelog: '拉萨—纳木错三天自驾小记', type: 'travelog' }
+    ];
+    
+    const colors = {
+      travelog: '#c41e3a',
+      history: '#d4a84b',
+      route: '#6b46c1',
+      business: '#8b5cf6'
+    };
+    
+    points.forEach(point => {
+      const marker = L.circleMarker([point.lat, point.lng], {
+        radius: 8,
+        fillColor: colors[point.type],
+        color: '#fff',
+        weight: 2,
+        fillOpacity: 0.8
+      }).addTo(map);
+      
+      marker.bindPopup(`
+        <div style="font-family: 'Noto Sans SC', sans-serif; min-width: 150px;">
+          <h4 style="margin:0 0 4px 0;color:#1a4b6e;font-size:14px;">${point.name}</h4>
+          <p style="margin:0;color:#666;font-size:12px;">来自《${point.travelog}》</p>
+        </div>
+      `);
+    });
+    
+    // 面板切换
+    function toggleRouteCapsule(btn) {
+      btn.classList.toggle('active');
+      const panel = document.getElementById('route-panel');
+      panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+    }
+    
+    function closeRoutePanel(e) {
+      if (e.target === e.currentTarget) {
+        document.getElementById('route-panel').style.display = 'none';
+        document.querySelector('.route-capsule').classList.remove('active');
+      }
+    }
+    
+    function toggleNarrativeCapsule() {
+      const panel = document.getElementById('narrative-panel');
+      panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+    }
+    
+    function closeNarrativePanel(e) {
+      if (e.target === e.currentTarget) {
+        document.getElementById('narrative-panel').style.display = 'none';
+      }
+    }
+    
+    function showTimeline() {
+      document.getElementById('timeline').style.display = 'block';
+    }
+    
+    function updateTimeline(value) {
+      const years = ['631年', '1645年', '1694年', '1959年'];
+      const descs = [
+        '松赞干布为迎娶文成公主始建红宫...',
+        '五世达赖喇嘛在吐蕃废墟上重建白宫...',
+        '第司·桑结嘉措主持兴建红宫...',
+        '西藏民主改革后，布达拉宫被列为...'
+      ];
+      document.querySelector('.timeline-year').textContent = years[value];
+      document.querySelector('.timeline-desc').textContent = descs[value];
+    }
+    
+    function showContributionMenu() {
+      document.getElementById('contribution-menu').style.display = 'flex';
+    }
+    
+    function closeContributionMenu(e) {
+      if (e.target === e.currentTarget) {
+        document.getElementById('contribution-menu').style.display = 'none';
+      }
+    }
+    
+    function showUserMenu() {
+      document.getElementById('user-menu').style.display = 'flex';
+    }
+    
+    function closeUserMenu(e) {
+      if (e.target === e.currentTarget) {
+        document.getElementById('user-menu').style.display = 'none';
+      }
+    }
+    
+    function showAchievement() {
+      closeUserMenu({ target: document.getElementById('user-menu') });
+      document.getElementById('achievement-modal').style.display = 'flex';
+    }
+    
+    function closeAchievement(e) {
+      if (e.target === e.currentTarget) {
+        document.getElementById('achievement-modal').style.display = 'none';
+      }
+    }
+    
+    function showSearchModal() {
+      alert('搜索功能需要在完整环境中运行');
+    }
+    
+    function showTravelogDetail(slug) {
+      alert('详情页需要在完整环境中运行');
+    }
+  </script>
+</body>
+</html>

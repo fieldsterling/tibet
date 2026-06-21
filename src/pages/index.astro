@@ -1,0 +1,154 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MapCore from '../components/MapCore';
+import SearchOverlay from '../components/SearchOverlay';
+import DiscoveryDrawer from '../components/DiscoveryDrawer';
+import RouteLayerCapsule from '../components/RouteLayerCapsule';
+import NarrativeLayerCapsule from '../components/NarrativeLayerCapsule';
+import UserMenu from '../components/UserMenu';
+import ContributionFab from '../components/ContributionFab';
+import AchievementBadge from '../components/AchievementBadge';
+import RouteCompare from '../components/RouteCompare';
+import KnowledgeGraph from '../components/KnowledgeGraph';
+import { getCollection } from 'astro:content';
+import { buildKnowledgeGraph } from '../utils/knowledgeGraph';
+
+const travelogs = await getCollection('travelogs');
+const histories = await getCollection('histories');
+const routes = await getCollection('routes');
+const businesses = await getCollection('businesses');
+
+// 构建知识图谱数据
+const knowledgeGraphData = await buildKnowledgeGraph();
+---
+
+<Layout title="西藏时空地图志">
+  <div class="relative w-full h-full">
+    <!-- 全屏地图 -->
+    <MapCore 
+      client:load 
+      travelogs={travelogs} 
+      routes={routes}
+    />
+    
+    <!-- 搜索浮层 -->
+    <SearchOverlay client:load travelogs={travelogs} />
+    
+    <!-- 路线层胶囊 -->
+    <RouteLayerCapsule client:load routes={routes} />
+    
+    <!-- 叙事层胶囊 -->
+    <NarrativeLayerCapsule client:load histories={histories} />
+    
+    <!-- 底部发现抽屉 -->
+    <DiscoveryDrawer client:load travelogs={travelogs} />
+    
+    <!-- 用户菜单 -->
+    <UserMenu client:load />
+    
+    <!-- 贡献浮动按钮 -->
+    <ContributionFab client:load />
+    
+    <!-- 顶部标题 -->
+    <header class="absolute top-0 left-0 right-0 z-[1000] pointer-events-none">
+      <div class="p-4 flex items-center justify-between">
+        <h1 class="font-serif text-2xl font-bold text-white drop-shadow-lg pointer-events-auto">
+          西藏时空地图志
+        </h1>
+        <div class="flex items-center gap-2 pointer-events-auto">
+          <a 
+            href="/about"
+            class="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:bg-white transition-colors"
+            title="关于"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </a>
+          <button 
+            id="btn-knowledge-graph"
+            class="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:bg-white transition-colors"
+            title="知识图谱"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+          </button>
+          <button 
+            id="btn-route-compare"
+            class="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:bg-white transition-colors"
+            title="路线对比"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </button>
+          <button 
+            id="btn-achievement"
+            class="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:bg-white transition-colors"
+            title="成就"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 知识图谱弹窗 -->
+    <div id="knowledge-graph-modal" class="hidden">
+      <KnowledgeGraph 
+        client:load 
+        nodes={knowledgeGraphData.nodes}
+        edges={knowledgeGraphData.edges}
+      />
+    </div>
+
+    <!-- 路线对比弹窗 -->
+    <div id="route-compare-modal" class="hidden">
+      <RouteCompare client:load travelogs={travelogs} />
+    </div>
+
+    <!-- 成就弹窗 -->
+    <div id="achievement-modal" class="hidden">
+      <AchievementBadge client:load />
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // 按钮事件绑定
+  document.getElementById('btn-knowledge-graph')?.addEventListener('click', () => {
+    const modal = document.getElementById('knowledge-graph-modal');
+    modal?.classList.remove('hidden');
+  });
+
+  document.getElementById('btn-route-compare')?.addEventListener('click', () => {
+    const modal = document.getElementById('route-compare-modal');
+    modal?.classList.remove('hidden');
+  });
+
+  document.getElementById('btn-achievement')?.addEventListener('click', () => {
+    const modal = document.getElementById('achievement-modal');
+    modal?.classList.remove('hidden');
+  });
+</script>
+
+<style>
+  /* 确保地图全屏 */
+  :global(html), :global(body) {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* 移动端适配 */
+  @media (max-width: 768px) {
+    header h1 {
+      font-size: 1.25rem !important;
+    }
+  }
+</style>

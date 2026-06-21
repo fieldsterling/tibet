@@ -1,0 +1,141 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import Giscus from '../../components/Giscus';
+
+export async function getStaticPaths() {
+  const routes = await getCollection('routes');
+  return routes.map(route => ({
+    params: { slug: route.slug },
+    props: { route }
+  }));
+}
+
+const { route } = Astro.props;
+const { Content } = await route.render();
+
+const typeLabels: Record<string, string> = {
+  '修行': '🧘 修行之旅',
+  '探险': '🗻 探险之路',
+  '朝圣': '🙏 朝圣之行'
+};
+---
+
+<Layout title={route.data.title}>
+  <div class="min-h-screen bg-tibet-cream">
+    {/* 头部 */}
+    <header class="bg-gradient-to-r from-tibet-blue to-tibet-red text-white py-12">
+      <div class="max-w-4xl mx-auto px-4">
+        <a href="/" class="inline-flex items-center text-white/80 hover:text-white mb-6">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          返回地图
+        </a>
+        <h1 class="font-serif text-3xl md:text-4xl font-bold mb-4">{route.data.title}</h1>
+        <div class="flex flex-wrap items-center gap-4 text-white/90">
+          <span class="flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            {route.data.author}
+          </span>
+          <span class={`px-3 py-1 rounded-full text-sm ${route.data.type === '修行' ? 'bg-purple-500' : route.data.type === '探险' ? 'bg-orange-500' : 'bg-red-500'}`}>
+            {typeLabels[route.data.type] || route.data.type}
+          </span>
+        </div>
+      </div>
+    </header>
+
+    {/* 路线地图 */}
+    {route.data.points && route.data.points.length > 0 && (
+      <div class="bg-white shadow-lg">
+        <div id="route-map" class="h-64 md:h-96"></div>
+      </div>
+    )}
+
+    {/* 内容 */}
+    <main class="max-w-4xl mx-auto px-4 py-8">
+      <article class="prose prose-lg max-w-none">
+        <Content />
+      </article>
+
+      {/* 路线站点 */}
+      {route.data.points && route.data.points.length > 0 && (
+        <div class="mt-12">
+          <h2 class="font-serif text-2xl font-bold text-tibet-blue mb-6">路线站点</h2>
+          <div class="space-y-4">
+            {route.data.points.map((point: any, index: number) => (
+              <div class="bg-white rounded-xl p-4 shadow-md">
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 rounded-full bg-tibet-blue text-white flex items-center justify-center font-bold flex-shrink-0">
+                    {index + 1}
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="font-serif font-semibold text-gray-900">{point.name}</h3>
+                    <p class="text-gray-700 mt-2">{point.desc}</p>
+                    {point.image && (
+                      <img 
+                        src={point.image} 
+                        alt={point.name}
+                        class="mt-3 w-full max-w-md rounded-lg"
+                      />
+                    )}
+                    <div class="mt-2 text-sm text-gray-500">
+                      📍 {point.lat.toFixed(4)}, {point.lng.toFixed(4)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 评论 */}
+      <div class="mt-12">
+        <Giscus />
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import L from 'leaflet';
+  import 'leaflet/dist/leaflet.css';
+
+  const mapDiv = document.getElementById('route-map');
+  if (mapDiv) {
+    const points = (window as any).__ROUTE_POINTS__ || [];
+    if (points.length > 0) {
+      const map = L.map('route-map');
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+      }).addTo(map);
+
+      const latlngs = points.map((p: any) => [p.lat, p.lng] as [number, number]);
+      
+      // 绘制路线
+      L.polyline(latlngs, {
+        color: '#6b46c1',
+        weight: 4,
+        opacity: 0.8
+      }).addTo(map);
+
+      // 绘制站点
+      points.forEach((point: any, index: number) => {
+        L.circleMarker([point.lat, point.lng], {
+          radius: index === 0 || index === points.length - 1 ? 10 : 6,
+          fillColor: index === 0 ? '#c41e3a' : index === points.length - 1 ? '#22c55e' : '#6b46c1',
+          color: '#fff',
+          weight: 2
+        }).bindPopup(`<strong>${index + 1}. ${point.name}</strong>`).addTo(map);
+      });
+
+      // 调整视野
+      const bounds = L.latLngBounds(latlngs);
+      map.fitBounds(bounds, { padding: [20, 20] });
+    }
+  }
+</script>

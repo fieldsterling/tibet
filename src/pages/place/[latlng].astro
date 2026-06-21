@@ -1,0 +1,217 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const [travelogs, businesses, histories] = await Promise.all([
+    getCollection('travelogs'),
+    getCollection('businesses'),
+    getCollection('histories')
+  ]);
+
+  // 收集所有唯一的地点
+  const placeMap = new Map<string, {
+    lat: number;
+    lng: number;
+    name: string;
+    travelogs: Array<{ slug: string; title: string; author: string }>;
+    histories: Array<{ slug: string; title: string; year?: number }>;
+    businesses: Array<{ slug: string; title: string; type: string }>;
+  }>();
+
+  // 处理旅行日志
+  travelogs.forEach(travelog => {
+    travelog.data.points?.forEach(point => {
+      const key = `${point.lat.toFixed(4)}-${point.lng.toFixed(4)}`;
+      if (!placeMap.has(key)) {
+        placeMap.set(key, {
+          lat: point.lat,
+          lng: point.lng,
+          name: point.name,
+          travelogs: [],
+          histories: [],
+          businesses: []
+        });
+      }
+      placeMap.get(key)!.travelogs.push({
+        slug: travelog.slug,
+        title: travelog.data.title,
+        author: travelog.data.author
+      });
+    });
+  });
+
+  // 处理历史事件
+  histories.forEach(history => {
+    history.data.events?.forEach(event => {
+      const key = `${event.lat.toFixed(4)}-${event.lng.toFixed(4)}`;
+      if (!placeMap.has(key)) {
+        placeMap.set(key, {
+          lat: event.lat,
+          lng: event.lng,
+          name: `地点 ${key}`,
+          travelogs: [],
+          histories: [],
+          businesses: []
+        });
+      }
+      placeMap.get(key)!.histories.push({
+        slug: history.slug,
+        title: history.data.title,
+        year: event.year
+      });
+    });
+  });
+
+  // 处理商家
+  businesses.forEach(business => {
+    const key = `${business.data.lat.toFixed(4)}-${business.data.lng.toFixed(4)}`;
+    if (!placeMap.has(key)) {
+      placeMap.set(key, {
+        lat: business.data.lat,
+        lng: business.data.lng,
+        name: business.data.title,
+        travelogs: [],
+        histories: [],
+        businesses: []
+      });
+    }
+    placeMap.get(key)!.businesses.push({
+      slug: business.slug,
+      title: business.data.title,
+      type: business.data.type
+    });
+  });
+
+  return Array.from(placeMap.entries()).map(([key, place]) => ({
+    params: { latlng: key },
+    props: { place }
+  }));
+}
+
+const { place } = Astro.props;
+---
+
+<Layout title={place.name}>
+  <div class="min-h-screen bg-tibet-cream">
+    {/* 头部 */}
+    <header class="bg-gradient-to-r from-tibet-blue to-tibet-red text-white py-12">
+      <div class="max-w-4xl mx-auto px-4">
+        <a href="/" class="inline-flex items-center text-white/80 hover:text-white mb-6">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          返回地图
+        </a>
+        <h1 class="font-serif text-3xl md:text-4xl font-bold mb-2">{place.name}</h1>
+        <p class="text-white/80">
+          📍 {place.lat.toFixed(4)}, {place.lng.toFixed(4)}
+        </p>
+      </div>
+    </header>
+
+    {/* 位置地图 */}
+    <div class="bg-white shadow-lg">
+      <div id="place-map" class="h-64 md:h-96" data-lat={place.lat} data-lng={place.lng}></div>
+    </div>
+
+    {/* 内容 */}
+    <main class="max-w-4xl mx-auto px-4 py-8">
+      {/* 旅行日志 */}
+      {place.travelogs.length > 0 && (
+        <section class="mb-8">
+          <h2 class="font-serif text-2xl font-bold text-tibet-blue mb-4 flex items-center gap-2">
+            <span>✈️</span> 旅行日志
+          </h2>
+          <div class="grid gap-4">
+            {place.travelogs.map((item: any) => (
+              <a 
+                href={`/travelog/${item.slug}`}
+                class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow block"
+              >
+                <h3 class="font-serif font-semibold text-gray-900">{item.title}</h3>
+                <p class="text-sm text-gray-500 mt-1">{item.author}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 历史记录 */}
+      {place.histories.length > 0 && (
+        <section class="mb-8">
+          <h2 class="font-serif text-2xl font-bold text-tibet-blue mb-4 flex items-center gap-2">
+            <span>📜</span> 历史记录
+          </h2>
+          <div class="grid gap-4">
+            {place.histories.map((item: any) => (
+              <a 
+                href={`/history/${item.slug}`}
+                class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow block"
+              >
+                <h3 class="font-serif font-semibold text-gray-900">{item.title}</h3>
+                {item.year && <p class="text-sm text-tibet-red mt-1">{item.year}年</p>}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 商家服务 */}
+      {place.businesses.length > 0 && (
+        <section class="mb-8">
+          <h2 class="font-serif text-2xl font-bold text-tibet-blue mb-4 flex items-center gap-2">
+            <span>🏪</span> 服务与商品
+          </h2>
+          <div class="grid gap-4">
+            {place.businesses.map((item: any) => (
+              <a 
+                href={`/business/${item.slug}`}
+                class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow block"
+              >
+                <h3 class="font-serif font-semibold text-gray-900">{item.title}</h3>
+                <span class="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                  {item.type}
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 无内容提示 */}
+      {place.travelogs.length === 0 && place.histories.length === 0 && place.businesses.length === 0 && (
+        <div class="text-center py-12 text-gray-500">
+          <p class="text-lg">暂无相关内容</p>
+          <a href="/" class="mt-4 inline-flex items-center text-tibet-blue hover:underline">
+            返回地图探索更多
+          </a>
+        </div>
+      )}
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import L from 'leaflet';
+  import 'leaflet/dist/leaflet.css';
+
+  const mapDiv = document.getElementById('place-map') as HTMLElement;
+  if (mapDiv) {
+    const lat = parseFloat(mapDiv.dataset.lat || '0');
+    const lng = parseFloat(mapDiv.dataset.lng || '0');
+    
+    const map = L.map('place-map').setView([lat, lng], 14);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+    }).addTo(map);
+
+    L.circleMarker([lat, lng], {
+      radius: 12,
+      fillColor: '#c41e3a',
+      color: '#fff',
+      weight: 3
+    }).addTo(map);
+  }
+</script>

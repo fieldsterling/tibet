@@ -1,0 +1,130 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="关于我们 - 西藏时空地图志">
+  <div class="min-h-screen bg-tibet-cream">
+    {/* 头部 */}
+    <header class="bg-gradient-to-r from-tibet-blue to-tibet-red text-white py-16">
+      <div class="max-w-4xl mx-auto px-4 text-center">
+        <h1 class="font-serif text-4xl md:text-5xl font-bold mb-4">西藏时空地图志</h1>
+        <p class="text-xl text-white/90">以地图为核心的空间知识站点</p>
+      </div>
+    </header>
+
+    {/* 内容 */}
+    <main class="max-w-4xl mx-auto px-4 py-12">
+      {/* 项目介绍 */}
+      <section class="mb-12">
+        <h2 class="font-serif text-2xl font-bold text-tibet-blue mb-4">关于项目</h2>
+        <div class="bg-white rounded-xl p-6 shadow-md">
+          <p class="text-gray-700 leading-relaxed mb-4">
+            西藏时空地图志是一个以<strong>地图为核心</strong>的纯静态知识站点，聚焦西藏地区的地理、历史、旅行与修行文化。整个网站就是一张地图——所有内容（时间轴、路线、历史叙事、商家标注）都以图层、卡片、时间滑块等形式直接在地图上交互呈现。
+          </p>
+          <p class="text-gray-700 leading-relaxed">
+            我们相信，最好的探索方式是将文字与空间结合。当你在地图上看到一个地点，不仅能阅读它的故事，还能看到它在历史长河中的变迁，感受它与其他地点之间的联系。
+          </p>
+        </div>
+      </section>
+
+      {/* 技术栈 */}
+      <section class="mb-12">
+        <h2 class="font-serif text-2xl font-bold text-tibet-blue mb-4">技术架构</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl p-4 shadow-md">
+            <h3 class="font-semibold text-gray-900 mb-2">🗺️ 地图底图</h3>
+            <p class="text-gray-600 text-sm">Leaflet + 天地图瓦片，支持中文标注</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-md">
+            <h3 class="font-semibold text-gray-900 mb-2">⚡ 站点生成</h3>
+            <p class="text-gray-600 text-sm">Astro 混合 SSG，按需加载交互组件</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-md">
+            <h3 class="font-semibold text-gray-900 mb-2">📝 内容管理</h3>
+            <p class="text-gray-600 text-sm">Decap CMS + Netlify Identity，可视化编辑</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-md">
+            <h3 class="font-semibold text-gray-900 mb-2">🔍 全站搜索</h3>
+            <p class="text-gray-600 text-sm">Pagefind 静态搜索，无需服务器</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 内容分类 */}
+      <section class="mb-12">
+        <h2 class="font-serif text-2xl font-bold text-tibet-blue mb-4">内容分类</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl p-4 shadow-md">
+            <h3 class="font-semibold text-gray-900 mb-2">✈️ 旅行者笔记</h3>
+            <p class="text-gray-600 text-sm">来自旅行者的真实经历与感悟，记录高原上的点点滴滴</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-md">
+            <h3 class="font-semibold text-gray-900 mb-2">📜 历史叙事</h3>
+            <p class="text-gray-600 text-sm">专业历史学者的深度解读，穿越千年的时光</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-md">
+            <h3 class="font-semibold text-gray-900 mb-2">🗺️ 地理路线</h3>
+            <p class="text-gray-600 text-sm">修行、探险、朝圣……不同方式的西藏探索</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-md">
+            <h3 class="font-semibold text-gray-900 mb-2">🏪 商家服务</h3>
+            <p class="text-gray-600 text-sm">住宿、餐饮、交通、补给……实用的旅行服务信息</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 贡献指南 */}
+      <section class="mb-12">
+        <h2 class="font-serif text-2xl font-bold text-tibet-blue mb-4">贡献指南</h2>
+        <div class="bg-white rounded-xl p-6 shadow-md">
+          <p class="text-gray-700 leading-relaxed mb-4">
+            我们欢迎所有热爱西藏文化的朋友参与贡献。你可以通过以下方式参与：
+          </p>
+          <ul class="list-disc list-inside text-gray-700 space-y-2">
+            <li>注册成为贡献者，提交你的旅行笔记</li>
+            <li>补充或修正历史叙事内容</li>
+            <li>分享你发现的特色路线</li>
+            <li>添加当地实用服务信息</li>
+          </ul>
+          <div class="mt-6">
+            <a 
+              href="/admin"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-tibet-blue text-white rounded-lg hover:bg-tibet-blue/90 transition-colors"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              开始贡献
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* 返回地图 */}
+      <div class="text-center">
+        <a 
+          href="/"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-tibet-red text-white rounded-lg hover:bg-tibet-red/90 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          打开地图探索
+        </a>
+      </div>
+    </main>
+
+    {/* 页脚 */}
+    <footer class="bg-gray-900 text-white py-8 mt-12">
+      <div class="max-w-4xl mx-auto px-4 text-center">
+        <p class="text-gray-400">
+          西藏时空地图志 · 以地图为核心的空间知识站点
+        </p>
+        <p class="text-gray-500 text-sm mt-2">
+          基于 Astro 构建 · 部署于 Netlify
+        </p>
+      </div>
+    </footer>
+  </div>
+</Layout>
